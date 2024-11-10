@@ -1,0 +1,14 @@
+[package]
+name = "hust_ledger_backend"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+actix-web = "4"
+reqwest = { version = "0.12", features = ["cookies"] }
+regex = "1.11"
+base64 = "0.22"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+rsa = "0.9"
+rand = "0.8"
