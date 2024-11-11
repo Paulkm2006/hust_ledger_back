@@ -3,7 +3,7 @@ info:
   title: HUSTPass authentication API
   version: 1.0.0
 paths:
-  - /login:
+  /login:
       post:
         summary: Login
         requestBody:
@@ -40,7 +40,7 @@ paths:
               application/json:
                 schema:
                   $ref: '#/components/schemas/LoginResponse'
-  - /login/captcha:
+  /login/captcha:
     get:
       summary: Get captcha
       responses:
