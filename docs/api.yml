@@ -32,10 +32,10 @@ paths:
               application/json:
                 schema:
                   $ref: '#/components/schemas/LoginResponse'
-            example:
-              status: 200
-              msg: Success
-              jsessionid: ABCDEFGHIJKLMNOPQRSTUVWXYZ
+                example:
+                  status: 200
+                  msg: Success
+                  jsessionid: ABCDEFGHIJKLMNOPQRSTUVWXYZ
           '400':
             description: Bad request
           '403':
@@ -44,10 +44,10 @@ paths:
               application/json:
                 schema:
                   $ref: '#/components/schemas/LoginResponse'
-            example:
-              status: 403
-              msg: Wrong username, password or captcha.
-              jsessionid: null
+                example:
+                  status: 403
+                  msg: Wrong username, password or captcha.
+                  jsessionid: null
           '500':
             description: Internal Error
             content:
@@ -64,11 +64,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CaptchaResponse'
-          example:
-            status: 200
-            msg: Success
-            ticket: LT-...-...-cas
-            jsessionid: ...!...
+              example:
+                status: 200
+                msg: Success
+                ticket: LT-...-...-cas
+                jsessionid: ...!...
         '500':
           description: Internal Error
           content:
