@@ -1,0 +1,94 @@
+openapi: 3.0.0
+info:
+  title: HUSTPass authentication API
+  version: 1.0.0
+paths:
+  - /login:
+      post:
+        summary: Login
+        requestBody:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+                  password:
+                    type: string
+                  lt:
+                    type: string
+                    description: Login token, should be the same as in the captcha response
+                  jsessionid:
+                    type: string
+                    description: Login JSESSIONID, should be the same as in the captcha response
+                  code:
+                    type: string
+                    description: Captcha code
+        responses:
+          '200':
+            description: OK
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/LoginResponse'
+          '400':
+            description: Bad request
+          '500':
+            description: Internal Error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/LoginResponse'
+  - /login/captcha:
+    get:
+      summary: Get captcha
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaptchaResponse'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaptchaResponse'
+        '400':
+          description: Bad request
+
+
+components:
+  schemas:
+    LoginResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Status code
+        msg:
+          type: string
+          description: Message
+        jsessionid:
+          type: string
+          description: JSESSIONID for ecard system
+    CaptchaResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Status code
+        msg:
+          type: string
+          description: Message
+        ticket:
+          type: string
+          description: lt for following login request
+        jsessionid:
+          type: string
+          description: JSESSIONID for following login request
+        img_base64:
+          type: string
+          description: Base64 encoded captcha image

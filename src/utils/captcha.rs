@@ -25,7 +25,7 @@ pub async fn get_captcha() -> Result<impl Responder, Box<dyn std::error::Error>>
 	let res = match client.get(request_url).send().await{
 		Ok(res) => res,
 		Err(e) => {
-			return Ok(HttpResponse::Ok().json(Captcha {
+			return Ok(HttpResponse::InternalServerError().json(Captcha {
 				status: 500,
 				msg: format!("Failed to get token: {}", e),
 				ticket: "".to_string(),
@@ -41,7 +41,7 @@ pub async fn get_captcha() -> Result<impl Responder, Box<dyn std::error::Error>>
 	let captcha = match client.get(captcha_url).send().await{
 		Ok(res) => res,
 		Err(e) => {
-			return Ok(HttpResponse::Ok().json(Captcha {
+			return Ok(HttpResponse::InternalServerError().json(Captcha {
 				status: 500,
 				msg: format!("Failed to get CAPTCHA: {}", e),
 				ticket: "".to_string(),

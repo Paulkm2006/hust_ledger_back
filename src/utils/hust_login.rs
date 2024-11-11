@@ -42,7 +42,7 @@ pub async fn login(cred: web::Json<Credential>) -> Result<impl Responder, Box<dy
 		.unwrap();
 	match get_castgc(cred, &mut client).await{
 		Ok(_) => (),
-		Err(e) => return Ok(HttpResponse::Ok().json(Info{
+		Err(e) => return Ok(HttpResponse::InternalServerError().json(Info{
 			status: 500,
 			msg: format!("Failed to login: {}", e),
 			jsessionid: "".to_string(),
@@ -50,12 +50,13 @@ pub async fn login(cred: web::Json<Credential>) -> Result<impl Responder, Box<dy
 	};
 	let jsession = match get_jsession(&mut client).await{
 		Ok(jsession) => jsession,
-		Err(e) => return Ok(HttpResponse::Ok().json(Info{
+		Err(e) => return Ok(HttpResponse::InternalServerError().json(Info{
 			status: 500,
-			msg: format!("Failed to get account no: {}", e),
+			msg: format!("Failed to get JSESSIONID: {}", e),
 			jsessionid: "".to_string(),
 		})),
 	};
+
 	
 	Ok(HttpResponse::Ok().json(Info{
 		status: 200,
@@ -69,10 +70,7 @@ async fn get_castgc(cred: web::Json<Credential>, client: &mut Client) -> Result<
 	let url = "https://pass.hust.edu.cn/cas/login";
 	let rsa_url = "https://pass.hust.edu.cn/cas/rsa";
 
-	let rsa_res = match client.post(rsa_url).send().await{
-		Ok(res) => res,
-		Err(e) => return Err(Box::new(e)),
-	};
+	let rsa_res = client.post(rsa_url).send().await?;
 	let rsa_json: serde_json::Value = serde_json::from_str(&rsa_res.text().await.unwrap()).unwrap();
 	let rsa_b64 = rsa_json["publicKey"].as_str().unwrap();
 	let rsa_key = general_purpose::STANDARD.decode(rsa_b64.as_bytes()).unwrap();
@@ -84,14 +82,11 @@ async fn get_castgc(cred: web::Json<Credential>, client: &mut Client) -> Result<
 	let pl_vec = rsa.encrypt(&mut rng, Pkcs1v15Encrypt, cred.password.as_bytes()).unwrap();
 	let pl = general_purpose::STANDARD.encode(pl_vec.as_ref() as &[u8]);
 
-	match client.post(url)
+	client.post(url)
 		.form(&[("ul", ul), ("pl", pl), ("lt", cred.lt.clone()), ("code", cred.code.clone()), 
 				("rsa", "".to_string()), ("phoneCode", "".to_string()), ("execution", "e1s1".to_string()), 
 				("_eventId", "submit".to_string())])
-		.send().await{
-		Ok(_) => (),
-		Err(e) => return Err(Box::new(e)),
-	};
+		.send().await?;
 	Ok(())
 }
 
@@ -99,10 +94,7 @@ async fn get_jsession(client: &mut Client) -> Result<String, Box<dyn std::error:
 	let url = "http://ecard.m.hust.edu.cn/wechat-web/QueryController/Queryurl.html";
 	let re_jsession = regex::Regex::new(r#"jsessionid=(.*)"#).unwrap();
 
-	let res = match client.get(url).send().await{
-		Ok(res) => res,
-		Err(e) => return Err(Box::new(e)),
-	};
+	let res = client.get(url).send().await?;
 	let jsession = match re_jsession.captures(res.url().as_str()){
 		Some(caps) => match caps.get(1){
 			Some(cap) => cap.as_str(),
