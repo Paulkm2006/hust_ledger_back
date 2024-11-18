@@ -263,8 +263,6 @@ components:
               description: Expense trend of 3 periods
               items:
                 $ref: '#/components/schemas/Trend'
-                $ref: '#/components/schemas/Trend'
-                $ref: '#/components/schemas/Trend'
             cafeteria_count:
               type: integer
               description: Total count of expenses in cafeteria
