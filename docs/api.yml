@@ -109,6 +109,16 @@ paths:
                 status: 201
                 msg: Report generation queued
                 data: null
+        '102':
+          description: Processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportResponse'
+              example:
+                status: 102
+                msg: Report is being generated
+                data: null
         '200':
           description: OK
           content:
