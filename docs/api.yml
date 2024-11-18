@@ -96,11 +96,8 @@ paths:
           required: true
           schema:
             type: string
+            enum: [week, month, year]
           description: Period of the report
-          enum:
-            - week
-            - month
-            - year
       responses:
         '201':
           description: Created
