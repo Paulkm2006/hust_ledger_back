@@ -38,6 +38,7 @@ pub async fn login(cred: web::Json<Credential>) -> Result<impl Responder, Box<dy
 			headers.insert(header::CONNECTION, "keep-alive".parse().unwrap());
 			headers
 		})
+		// .redirect(reqwest::redirect::Policy::none())
 		.build()
 		.unwrap();
 	match get_castgc(cred, &mut client).await{
@@ -67,7 +68,7 @@ pub async fn login(cred: web::Json<Credential>) -> Result<impl Responder, Box<dy
 
 
 async fn get_castgc(cred: web::Json<Credential>, client: &mut Client) -> Result<(), Box<dyn std::error::Error>> {
-	let url = "https://pass.hust.edu.cn/cas/login";
+	let url = "https://pass.hust.edu.cn/cas/login?service=http%3A%2F%2Fecard.m.hust.edu.cn%3A80%2Fwechat-web%2FQueryController%2FQueryurl.html";
 	let rsa_url = "https://pass.hust.edu.cn/cas/rsa";
 
 	let rsa_res = client.post(rsa_url).send().await?;
@@ -84,13 +85,15 @@ async fn get_castgc(cred: web::Json<Credential>, client: &mut Client) -> Result<
 
 	let res = client.post(url)
 		.form(&[("ul", ul), ("pl", pl), ("lt", cred.lt.clone()), ("code", cred.code.clone()), 
-				("rsa", "".to_string()), ("phoneCode", "".to_string()), ("execution", "e1s1".to_string()), 
+				("rsa", "".to_string()), ("phoneCode", "".to_string()), ("execution", "e2s1".to_string()), 
 				("_eventId", "submit".to_string())])
 		.send().await?;
-	match res.url().as_str(){
-		"http://one.hust.edu.cn/" => Ok(()),
-		_ => Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "Wrong username, password or captcha."))),
-	}
+	println!("{:#?}", res.headers());
+	// match res.url().as_str(){
+	// 	"http://one.hust.edu.cn/" => Ok(()),
+	// 	_ => Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "Wrong username, password or captcha."))),
+	// }
+	Ok(())
 }
 
 async fn get_jsession(client: &mut Client) -> Result<String, Box<dyn std::error::Error>> {
@@ -98,6 +101,7 @@ async fn get_jsession(client: &mut Client) -> Result<String, Box<dyn std::error:
 	let re_jsession = regex::Regex::new(r#"jsessionid=(.*)"#).unwrap();
 
 	let res = client.get(url).send().await?;
+	println!("{:#?}", res.cookies().collect::<Vec<_>>());
 	let jsession = match re_jsession.captures(res.url().as_str()){
 		Some(caps) => match caps.get(1){
 			Some(cap) => cap.as_str(),

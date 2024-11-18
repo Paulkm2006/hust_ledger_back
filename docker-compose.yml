@@ -1,0 +1,41 @@
+services:
+  mongo:
+    image: mongo:latest
+    container_name: mongo
+    expose:
+      - "27017"
+    volumes:
+      - ./data/mongo:/data/db
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=114514
+      - TZ=Asia/Shanghai
+  rabbit:
+    image: rabbitmq:latest
+    container_name: rabbit
+    expose:
+      - "5672"
+      - "15672"
+    restart: always
+    environment:
+      - RABBITMQ_DEFAULT_USER=root
+      - RABBITMQ_DEFAULT_PASS=114514
+      - TZ=Asia/Shanghai
+  worker:
+    build: ./worker/
+    container_name: worker
+    restart: always
+    depends_on:
+      - mongo
+      - rabbit
+  api:
+    build: .
+    container_name: api
+    expose:
+      - "8080"
+    restart: always
+    depends_on:
+      - mongo
+      - rabbit
+      - worker
