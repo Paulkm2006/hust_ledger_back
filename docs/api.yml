@@ -251,7 +251,7 @@ components:
               type: string
               description: Student ID
             balance:
-              type: integer
+              type: number
               description: Balance
             total_expense:
               type: integer
@@ -312,4 +312,3 @@ components:
                 location:
                   type: string
                   description: Location
-                
