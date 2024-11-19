@@ -4,3 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+reqwest = { version = "0.12", features = ["cookies"] }
+regex = "1.11"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+redis = "0.27"
+config-file = "*"
+mongodb = "3.1"
+tokio = "*"
+chrono = "*"

@@ -15,11 +15,16 @@ pub struct Credential {
 	code: String,
 	jsessionid: String,
 }
+#[derive(Deserialize)]
+pub struct CASRefresh{
+	castgc: String,
+}
 
 #[derive(Serialize)]
 struct Info{
 	status: i32,
 	msg: String,
+	castgc: String,
 	jsessionid: String,
 }
 
@@ -60,6 +65,7 @@ pub async fn login(cred: web::Json<Credential>) -> Result<impl Responder, Box<dy
 	let url = reqwest::Url::parse("https://pass.hust.edu.cn").unwrap();
 	cookie_store.add_cookie_str(("JSESSIONID=".to_owned() + &cred.jsessionid).as_str(), &url);
 	let mut client = Client::builder()
+		.redirect(reqwest::redirect::Policy::none())
 		.cookie_provider(cookie_store.into())
 		.default_headers({
 			let mut headers = header::HeaderMap::new();
@@ -70,37 +76,46 @@ pub async fn login(cred: web::Json<Credential>) -> Result<impl Responder, Box<dy
 			headers.insert(header::CONNECTION, "keep-alive".parse().unwrap());
 			headers
 		})
-		// .redirect(reqwest::redirect::Policy::none())
 		.build()
 		.unwrap();
-	match get_castgc(cred, &mut client).await{
-		Ok(_) => (),
+	let castgc = match get_castgc(cred, &mut client).await{
+		Ok(castgc) => castgc,
 		Err(e) => return Ok(HttpResponse::Forbidden().json(Info{
 			status: 403,
 			msg: format!("Failed to login: {}", e),
+			castgc: "".to_string(),
 			jsessionid: "".to_string(),
 		})),
 	};
-	let jsession = match get_jsession(&mut client).await{
+	let jsession = match get_jsession(&castgc).await{
 		Ok(jsession) => jsession,
 		Err(e) => return Ok(HttpResponse::InternalServerError().json(Info{
 			status: 500,
 			msg: format!("Failed to get JSESSIONID: {}", e),
+			castgc: "".to_string(),
 			jsessionid: "".to_string(),
 		})),
 	};
-
-	
 	Ok(HttpResponse::Ok().json(Info{
 		status: 200,
-		msg: "Success".to_string(),
+		msg: "Login successful.".to_string(),
+		castgc: castgc,
 		jsessionid: jsession,
 	}))
 }
 
+pub async fn refresh_jsession(castgc: web::Query<CASRefresh>) -> Result<impl Responder, Box<dyn std::error::Error>> {
+	let jsession = get_jsession(&castgc.castgc).await?;
+	Ok(HttpResponse::Ok().json(Info{
+		status: 200,
+		msg: "JSESSIONID refreshed.".to_string(),
+		castgc: castgc.castgc.clone(),
+		jsessionid: jsession,
+	}))
+}
 
-async fn get_castgc(cred: web::Json<Credential>, client: &mut Client) -> Result<(), Box<dyn std::error::Error>> {
-	let url = "https://pass.hust.edu.cn/cas/login?service=http%3A%2F%2Fecard.m.hust.edu.cn%3A80%2Fwechat-web%2FQueryController%2FQueryurl.html";
+async fn get_castgc(cred: web::Json<Credential>, client: &mut Client) -> Result<String, Box<dyn std::error::Error>> {
+	let url = "https://pass.hust.edu.cn/cas/login?service=http%3A%2F%2Fecard.m.hust.edu.cn%3A80%2Fwechat-web%2FQueryController%2Fselect.html";
 	let rsa_url = "https://pass.hust.edu.cn/cas/rsa";
 
 	let rsa_res = client.post(rsa_url).send().await?;
@@ -120,16 +135,35 @@ async fn get_castgc(cred: web::Json<Credential>, client: &mut Client) -> Result<
 				("rsa", "".to_string()), ("phoneCode", "".to_string()), ("execution", "e1s1".to_string()), 
 				("_eventId", "submit".to_string())])
 		.send().await?;
-	match res.url().as_str(){
-		"http://one.hust.edu.cn/" => Ok(()),
-		_ => Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "Wrong username, password or captcha."))),
+	let cookies = res.cookies().collect::<Vec<_>>();
+	match cookies.iter().find(|c| c.name() == "CASTGC"){
+		Some(t) => Ok(t.value().to_string()),
+		None => Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "Wrong username, password or captcha."))),
 	}
 
 }
 
-async fn get_jsession(client: &mut Client) -> Result<String, Box<dyn std::error::Error>> {
+async fn get_jsession(castgc: &String) -> Result<String, Box<dyn std::error::Error>> {
 	let url = "http://ecard.m.hust.edu.cn/wechat-web/QueryController/Queryurl.html";
 	let re_jsession = regex::Regex::new(r#"jsessionid=(.*)"#).unwrap();
+
+	let cookie_store = reqwest::cookie::Jar::default();
+	let url_token = reqwest::Url::parse("https://pass.hust.edu.cn").unwrap();
+	cookie_store.add_cookie_str(("CASTGC=".to_owned() + &castgc).as_str(), &url_token);
+
+	let client = Client::builder()
+	.cookie_provider(cookie_store.into())
+	.default_headers({
+		let mut headers = header::HeaderMap::new();
+		headers.insert(header::USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3".parse().unwrap());
+		headers.insert(header::ACCEPT, "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8".parse().unwrap());
+		headers.insert(header::ACCEPT_ENCODING, "gzip, deflate, sdch".parse().unwrap());
+		headers.insert(header::ACCEPT_LANGUAGE, "zh-CN,zh;q=0.8".parse().unwrap());
+		headers.insert(header::CONNECTION, "keep-alive".parse().unwrap());
+		headers
+	})
+	.build()
+	.unwrap();
 
 	let res = client.get(url).send().await?;
 	let jsession = match re_jsession.captures(res.url().as_str()){

@@ -38,6 +38,7 @@ paths:
                 example:
                   status: 200
                   msg: Success
+                  castgc: TGT-U...-...-...-cas
                   jsessionid: ABCDEFGHIJKLMNOPQRSTUVWXYZ
           '400':
             description: Bad request
@@ -57,6 +58,46 @@ paths:
               application/json:
                 schema:
                   $ref: '#/components/schemas/LoginResponse'
+  /login/refresh:
+    get:
+      summary: refresh JSESSIONID
+      parameters:
+        - name: castgc
+          in: query
+          required: true
+          schema:
+            type: string
+          description: CASTGC for HUSTPASS
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              example:
+                status: 200
+                msg: Success
+                castgc: TGT-U...-...-...-cas
+                jsessionid: ABCDEFG
+        '400':
+          description: Bad request
+        '403':
+          description: Username, password or captcha code is incorrect
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              example:
+                status: 403
+                msg: Wrong username, password or captcha.
+                jsessionid: null
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
   /login/captcha:
     get:
       summary: Get captcha
@@ -189,6 +230,9 @@ components:
         msg:
           type: string
           description: Message
+        castgc:
+          type: string
+          description: CASTGC for HUSTPASS
         jsessionid:
           type: string
           description: JSESSIONID for ecard system

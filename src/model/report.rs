@@ -50,24 +50,30 @@ pub enum Status{
 
 pub async fn get_report(account_no: String, period: &str, jsession: &str, redis_client: web::Data<RedisClient>, mongo_client: web::Data<MongoClient>) -> Result<Status, Box<dyn std::error::Error>> {
     let mut con = redis_client.get_connection()?;
-    let key = format!("report:{}:{}", account_no, period);
+    let key = format!("request:{}:{}", account_no, period);
     match con.get::<_, String>(&key) {
         Ok(v) => {
             if v.starts_with("waiting") || v == "accepted" {
                 Ok(Status::Processing)
-            } else if v == "error" {
-                Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "Report generation failed.")))
             } else {
-                let report_no = &v;
-                let db = mongo_client.database("hust_ledger");
-                let collection: Collection<ReportData> = db.collection("report");
-                let report = collection.find_one(doc!{"_id": report_no}).await?.unwrap();
-                Ok(Status::Finished(report))
+                Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "Report generation failed. ".to_string() + &v)))
             }
         },
         Err(_) => {
-            let _: () = con.set(&key, "waiting:".to_string()+jsession)?;
-            Ok(Status::Created)
-        },
+            let key_res = format!("result:{}:{}", account_no, period);
+            match con.get::<_, String>(&key_res) {
+                Ok(v) => {
+                    let report_no = &v;
+                    let db = mongo_client.database("hust_ledger");
+                    let collection: Collection<ReportData> = db.collection("report");
+                    let report = collection.find_one(doc!{"_id": report_no}).await?.unwrap();
+                    Ok(Status::Finished(report))
+                },
+                Err(_) => {
+                    let _: () = con.set(&key, "waiting:".to_string()+jsession)?;
+                    Ok(Status::Created)
+                }
+            }
+        }
     }
 }
