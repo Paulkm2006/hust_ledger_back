@@ -7,7 +7,7 @@ use redis::Client as RedisClient;
 
 #[derive(Deserialize)]
 pub struct Query {
-	jsessionid: String,
+	castgc: String,
 	period: String,
 }
 
@@ -19,7 +19,7 @@ pub struct Report{
 }
 
 pub async fn report(q: web::Query<Query>, redis_client: web::Data<RedisClient>, mongo_client: web::Data<MongoClient>) -> Result<impl Responder, Box<dyn std::error::Error>> {
-	let account_no = match get_account_no(&q.jsessionid).await{
+	let account_no = match get_account_no(&q.castgc).await{
 		Ok(t) => t,
 		Err(e) => {return Ok(HttpResponse::Forbidden().json(Report{
 			status: 403,
@@ -27,7 +27,7 @@ pub async fn report(q: web::Query<Query>, redis_client: web::Data<RedisClient>, 
 			data: None,
 		}));},
 	};
-	match get_report(account_no, &q.period, &q.jsessionid, redis_client, mongo_client).await?{
+	match get_report(account_no, &q.period, &q.castgc, redis_client, mongo_client).await?{
 		Status::Created => Ok(HttpResponse::Created().json(Report{
 			status: 201,
 			msg: "Report generation queued".to_string(),

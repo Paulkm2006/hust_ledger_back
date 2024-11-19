@@ -48,7 +48,7 @@ pub enum Status{
 	Error(Box<dyn std::error::Error>),
 }
 
-pub async fn get_report(account_no: String, period: &str, jsession: &str, redis_client: web::Data<RedisClient>, mongo_client: web::Data<MongoClient>) -> Result<Status, Box<dyn std::error::Error>> {
+pub async fn get_report(account_no: String, period: &str, castgc: &str, redis_client: web::Data<RedisClient>, mongo_client: web::Data<MongoClient>) -> Result<Status, Box<dyn std::error::Error>> {
     let mut con = redis_client.get_connection()?;
     let key = format!("request:{}:{}", account_no, period);
     match con.get::<_, String>(&key) {
@@ -70,7 +70,7 @@ pub async fn get_report(account_no: String, period: &str, jsession: &str, redis_
                     Ok(Status::Finished(report))
                 },
                 Err(_) => {
-                    let _: () = con.set(&key, "waiting:".to_string()+jsession)?;
+                    let _: () = con.set(&key, "waiting:".to_string()+castgc)?;
                     Ok(Status::Created)
                 }
             }

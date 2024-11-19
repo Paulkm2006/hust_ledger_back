@@ -15,10 +15,7 @@ pub struct Credential {
 	code: String,
 	jsessionid: String,
 }
-#[derive(Deserialize)]
-pub struct CASRefresh{
-	castgc: String,
-}
+
 
 #[derive(Serialize)]
 struct Info{
@@ -27,27 +24,29 @@ struct Info{
 	castgc: String,
 }
 
-pub async fn get_account_no(jsession: &str) -> Result<String, Box<dyn std::error::Error>>{
-	let url_q = "http://ecard.m.hust.edu.cn/wechat-web/QueryController/Queryurl.html";
+pub async fn get_account_no(castgc: &str) -> Result<String, Box<dyn std::error::Error>>{
+	let url = "http://ecard.m.hust.edu.cn/wechat-web/QueryController/Queryurl.html";
 	let regex = regex::Regex::new(r#"<input id="account" type="hidden" value="(.*)"/>"#).unwrap();
 
 	let cookie_store = reqwest::cookie::Jar::default();
-	let url = reqwest::Url::parse("http://ecard.m.hust.edu.cn").unwrap();
-	cookie_store.add_cookie_str(("JSESSIONID=".to_owned() + &jsession).as_str(), &url);
+	let url_token = reqwest::Url::parse("https://pass.hust.edu.cn").unwrap();
+	cookie_store.add_cookie_str(("CASTGC=".to_owned() + &castgc).as_str(), &url_token);
+
 	let client = Client::builder()
-		.cookie_provider(cookie_store.into())
-		.default_headers({
-			let mut headers = header::HeaderMap::new();
-			headers.insert(header::USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3".parse().unwrap());
-			headers.insert(header::ACCEPT, "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8".parse().unwrap());
-			headers.insert(header::ACCEPT_ENCODING, "gzip, deflate, sdch".parse().unwrap());
-			headers.insert(header::ACCEPT_LANGUAGE, "zh-CN,zh;q=0.8".parse().unwrap());
-			headers.insert(header::CONNECTION, "keep-alive".parse().unwrap());
-			headers
-		})
-		.build()
-		.unwrap();
-	let res = client.get(url_q).send().await?;
+	.cookie_provider(cookie_store.into())
+	.default_headers({
+		let mut headers = header::HeaderMap::new();
+		headers.insert(header::USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3".parse().unwrap());
+		headers.insert(header::ACCEPT, "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8".parse().unwrap());
+		headers.insert(header::ACCEPT_ENCODING, "gzip, deflate, sdch".parse().unwrap());
+		headers.insert(header::ACCEPT_LANGUAGE, "zh-CN,zh;q=0.8".parse().unwrap());
+		headers.insert(header::CONNECTION, "keep-alive".parse().unwrap());
+		headers
+	})
+	.build()
+	.unwrap();
+
+	let res = client.get(url).send().await?;
 	let resp = res.text().await.unwrap();
 	let account_no = match regex.captures(resp.as_str()){
 		Some(caps) => match caps.get(1){
@@ -92,6 +91,7 @@ pub async fn login(cred: web::Json<Credential>) -> Result<impl Responder, Box<dy
 	}))
 }
 
+
 async fn get_castgc(cred: web::Json<Credential>, client: &mut Client) -> Result<String, Box<dyn std::error::Error>> {
 	let url = "https://pass.hust.edu.cn/cas/login?service=http%3A%2F%2Fecard.m.hust.edu.cn%3A80%2Fwechat-web%2FQueryController%2Fselect.html";
 	let rsa_url = "https://pass.hust.edu.cn/cas/rsa";
@@ -120,4 +120,3 @@ async fn get_castgc(cred: web::Json<Credential>, client: &mut Client) -> Result<
 	}
 
 }
-
