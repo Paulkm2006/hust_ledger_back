@@ -87,20 +87,11 @@ pub async fn login(cred: web::Json<Credential>) -> Result<impl Responder, Box<dy
 			jsessionid: "".to_string(),
 		})),
 	};
-	let jsession = match get_jsession(&castgc).await{
-		Ok(jsession) => jsession,
-		Err(e) => return Ok(HttpResponse::InternalServerError().json(Info{
-			status: 500,
-			msg: format!("Failed to get JSESSIONID: {}", e),
-			castgc: "".to_string(),
-			jsessionid: "".to_string(),
-		})),
-	};
 	Ok(HttpResponse::Ok().json(Info{
 		status: 200,
 		msg: "Login successful.".to_string(),
 		castgc: castgc,
-		jsessionid: jsession,
+		jsessionid: "".to_string()
 	}))
 }
 
