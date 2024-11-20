@@ -9,7 +9,7 @@ services:
     restart: always
     environment:
       - MONGO_INITDB_ROOT_USERNAME=root
-      - MONGO_INITDB_ROOT_PASSWORD=114514
+      - MONGO_INITDB_ROOT_PASSWORD=ACbd114514
       - TZ=Asia/Shanghai
   redis:
     image: redis:latest
@@ -19,21 +19,21 @@ services:
     restart: always
     environment:
       - TZ=Asia/Shanghai
-      - REDIS_PASSWORD=114514
+      - REDIS_PASSWORD=ACbd114514
   worker:
     build: ./worker/
     container_name: worker
     restart: always
     depends_on:
       - mongo
-      - rabbit
+      - redis
   api:
     build: .
     container_name: api
-    expose:
-      - "8080"
+    ports:
+      - "8080:8080"
     restart: always
     depends_on:
       - mongo
-      - rabbit
+      - redis
       - worker

@@ -85,12 +85,12 @@ paths:
     get:
       summary: Report
       parameters:
-        - name: JSSESSIONID
+        - name: castgc
           in: header
           required: true
           schema:
             type: string
-          description: JSESSIONID for ecard system
+          description: castgc for HUSTPASS
         - name: period
           in: query
           required: true
@@ -124,48 +124,47 @@ paths:
                 status: 200
                 msg: Success
                 data:
-                  name: "张三"
-                  id: "U201700000"
-                  balance: 114514
-                  total_expense: 1919810
-                  total_count: 1919
+                  date: 202101
+                  balance: 100
+                  total_expense: 100
+                  total_count: 1
                   top_expense:
-                    time: "2021-01-01 00:00:00"
-                    location: "东区食堂"
-                    amount: 1919.810
+                    time: 20210101000000
+                    location: 'Canteen'
+                    amount: 100
                   top_count:
-                    time: "2021-01-01 00:00:00"
-                    location: "东区食堂"
-                    amount: 1919.810
+                    location: 'Canteen'
+                    amount: 100
+                    count: 100
                   trend:
-                    - count: 11
-                      amount: 1919.810
-                    - count: 45
-                      amount: 810.191
-                    - count: 14
-                      amount: 114.514
-                  cafeteria_count: 1919
+                    - count: 1
+                      expense: 100
+                    - count: 1
+                      expense: 100
+                    - count: 1
+                      expense: 100
+                  cafeteria_count: 1
                   breakfast:
-                    count: 810
-                    amount: 1919.810
-                    location: "东区食堂"
+                    count: 1
+                    amount: 100
                   lunch:
-                    count: 810
-                    amount: 1919.810
-                    location: "东区食堂"
+                    count: 1
+                    amount: 100
                   dinner:
-                    count: 810
-                    amount: 1919.810
-                    location: "东区食堂"
+                    count: 1
+                    amount: 100
+                  midnight_snack:
+                    count: 1
+                    amount: 100
         '403':
-          description: JSESSIONID is invalid
+          description: castgc is invalid
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ReportResponse'
               example:
                 status: 403
-                msg: JSESSIONID is invalid
+                msg: castgc is invalid
                 data: null
         '500':
           description: Internal Error
@@ -210,7 +209,7 @@ components:
       properties:
         time:
           type: string
-          description: Time
+          description: Time YYYYMMDDHHMMSS
         location:
           type: string
           description: Location
@@ -220,12 +219,33 @@ components:
     Trend:
       type: object
       properties:
-        time:
-          type: string
-          description: Timestamp
+        count:
+          type: integer
+          description: Total transaction count
+        expense:
+          type: number
+          description: Amount
+    Meal:
+      type: object
+      properties:
+        count:
+          type: integer
+          description: Count
         amount:
           type: number
           description: Amount
+    Trans:
+      type: object
+      properties:
+        location:
+          type: string
+          description: Location
+        amount:
+          type: number
+          description: Amount
+        count:
+          type: integer
+          description: Count
     ReportResponse:
       type: object
       properties:
@@ -239,12 +259,9 @@ components:
           type: object
           description: Report data
           properties:
-            name:
-              type: string
-              description: Student name
-            id:
-              type: string
-              description: Student ID
+            date:
+              type: integer
+              description: Date, for weekly report is YYYYWW, for monthly report is YYYYMM, for yearly report is YYYY
             balance:
               type: number
               description: Balance
@@ -259,7 +276,7 @@ components:
               $ref: '#/components/schemas/Expense'
             top_count:
               description: One location that has the most expenses happened
-              $ref: '#/components/schemas/Expense'
+              $ref: '#/components/schemas/Trans'
             trend:
               type: array
               description: Expense trend of 3 periods
@@ -269,41 +286,14 @@ components:
               type: integer
               description: Total count of expenses in cafeteria
             breakfast:
-              type: object
-              description: Breakfast expense
-              properties:
-                count:
-                  type: integer
-                  description: Count
-                amount:
-                  type: number
-                  description: Amount
-                location:
-                  type: string
-                  description: Location
+              description: Breakfast expense 6:00-9:00
+              $ref: '#/components/schemas/Meal'
             lunch:
-              type: object
-              description: Lunch expense
-              properties:
-                count:
-                  type: integer
-                  description: Count
-                amount:
-                  type: number
-                  description: Amount
-                location:
-                  type: string
-                  description: Location
+              description: Lunch expense 11:00-14:00
+              $ref: '#/components/schemas/Meal'
             dinner:
-              type: object
-              description: Dinner expense
-              properties:
-                count:
-                  type: integer
-                  description: Count
-                amount:
-                  type: number
-                  description: Amount
-                location:
-                  type: string
-                  description: Location
+              description: Dinner expense 17:00-20:00
+              $ref: '#/components/schemas/Meal'
+            midnight_snack:
+              description: Midnight snack expense 22:00-24:00
+              $ref: '#/components/schemas/Meal'
