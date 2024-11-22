@@ -3,6 +3,9 @@ name = "hust_ledger_backend"
 version = "0.1.0"
 edition = "2021"
 
+[profile.release]
+opt-level = 3
+
 [dependencies]
 actix-web = "4"
 reqwest = { version = "0.12", features = ["cookies"] }

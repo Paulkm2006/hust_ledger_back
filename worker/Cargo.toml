@@ -3,6 +3,9 @@ name = "worker"
 version = "0.1.0"
 edition = "2021"
 
+[profile.release]
+opt-level = 3
+
 [dependencies]
 reqwest = { version = "0.12", features = ["cookies"] }
 regex = "1.11"
