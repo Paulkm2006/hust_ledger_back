@@ -57,10 +57,11 @@ jobs:
           name: Worker binary
 
       - name: Decompress main artifact
-        run: unzip "${{ github.workspace }}/Main binary.zip" -d "${{ github.workspace }}/main"
-        run: unzip "${{ github.workspace }}/Worker binary.zip" -d "${{ github.workspace }}/worker"
-        run: unzip "${{ github.workspace }}/main/hust_ledger_back_null_x86_64-unknown-linux-musl.zip" -d "${{ github.workspace }}/main"
-        run: unzip "${{ github.workspace }}/worker/hust_ledger_back_null_x86_64-unknown-linux-musl.zip" -d "${{ github.workspace }}/worker"
+        run: |
+          unzip "${{ github.workspace }}/Main binary.zip" -d "${{ github.workspace }}/main" 
+          unzip "${{ github.workspace }}/Worker binary.zip" -d "${{ github.workspace }}/worker" 
+          unzip "${{ github.workspace }}/main/hust_ledger_back_null_x86_64-unknown-linux-musl.zip" -d "${{ github.workspace }}/main" 
+          unzip "${{ github.workspace }}/worker/hust_ledger_back_null_x86_64-unknown-linux-musl.zip" -d "${{ github.workspace }}/worker"
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
