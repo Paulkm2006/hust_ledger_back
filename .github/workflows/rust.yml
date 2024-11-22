@@ -52,10 +52,14 @@ jobs:
       - name: Decompress main artifact
         run: |
           ls -l
-          unzip "Main binary.zip" -d "${{ github.workspace }}/main"
-          unzip "Worker binary.zip" -d "${{ github.workspace }}/worker"
-          unzip "${{ github.workspace }}/main/hust_ledger_back_null_x86_64-unknown-linux-musl.zip" -d "${{ github.workspace }}/main"
-          unzip "${{ github.workspace }}/worker/hust_ledger_back_null_x86_64-unknown-linux-musl.zip" -d "${{ github.workspace }}/worker"
+          mkdir main_dir
+          mkdir worker_dir
+          unzip "Main binary" -d "main_dir/"
+          unzip "Worker binary" -d "worker_dir/"
+          ls -l
+          unzip "main_dir/hust_ledger_back_null_x86_64-unknown-linux-musl.zip"
+          unzip "worker_dir/hust_ledger_back_null_x86_64-unknown-linux-musl.zip"
+          ls -l
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
@@ -64,5 +68,5 @@ jobs:
           prerelease: true
           title: "Development Build"
           files: |
-            "${{ github.workspace }}/main/main"
-            "${{ github.workspace }}/worker/worker"
+            "hust_ledger_back"
+            "worker"
