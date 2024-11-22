@@ -124,7 +124,7 @@ paths:
                 status: 200
                 msg: Success
                 data:
-                  date: 202101
+                  date: '202101'
                   balance: 100
                   total_expense: 100
                   total_count: 1
@@ -144,6 +144,13 @@ paths:
                     - count: 1
                       expense: 100
                   cafeteria_count: 1
+                  cafeteria_amount: 100.0
+                  groceries_count: 0
+                  groceries_amount: 0.0
+                  logistics_count: 0
+                  logistics_amount: 0.0
+                  other_count: 0
+                  other_amount: 0.0
                   breakfast:
                     count: 1
                     amount: 100
@@ -260,7 +267,7 @@ components:
           description: Report data
           properties:
             date:
-              type: integer
+              type: String
               description: Date, for weekly report is YYYYWW, for monthly report is YYYYMM, for yearly report is YYYY
             balance:
               type: number
@@ -279,12 +286,33 @@ components:
               $ref: '#/components/schemas/Trans'
             trend:
               type: array
-              description: Expense trend of 3 periods
+              description: Expense trend of 3 periods, in ascending order of time
               items:
                 $ref: '#/components/schemas/Trend'
             cafeteria_count:
               type: integer
               description: Total count of expenses in cafeteria
+            cafeteria_amount:
+              type: number
+              description: Total expense in cafeteria
+            groceries_count:
+              type: integer
+              description: Total count of expenses in groceries
+            groceries_amount:
+              type: number
+              description: Total expense in groceries
+            logistics_count:
+              type: integer
+              description: Total count of expenses in logistics
+            logistics_amount:
+              type: number
+              description: Total expense in logistics
+            other_count:
+              type: integer
+              description: Total count of expenses in other locations
+            other_amount:
+              type: number
+              description: Total expense in other locations
             breakfast:
               description: Breakfast expense 6:00-9:00
               $ref: '#/components/schemas/Meal'
