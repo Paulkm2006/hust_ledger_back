@@ -1,3 +1,4 @@
+use chrono::Datelike as _;
 use redis::Commands;
 use mongodb::{Client as MongoClient, Collection, bson::doc};
 use redis::Client as RedisClient;
@@ -71,7 +72,7 @@ async fn main() {
             let account = t[1];
             let key_res = format!("result:{}:{}", account, period);
             let _: () = redis_connection.del(&key).unwrap();
-            let _:() = match process(castgc, period, account, &mongo_client).await{
+            let _:() = match process(castgc, period, account.to_string(), &mongo_client).await{
                 Ok(id) => {
                     redis_connection.set(key_res, id).unwrap()
                 },
@@ -85,7 +86,7 @@ async fn main() {
 }
 
 
-async fn process(castgc: &str, period: &str, account: &str, db: &mongodb::Client) -> Result<String, Box<dyn std::error::Error>> {
+async fn process(castgc: &str, period: &str, account: String, db: &mongodb::Client) -> Result<String, Box<dyn std::error::Error>> {
     let cookie_store = reqwest::cookie::Jar::default();
     let jsession = utils::hust_login::get_jsession(castgc).await.unwrap();
 	let url = reqwest::Url::parse("http://ecard.m.hust.edu.cn").unwrap();
@@ -103,22 +104,24 @@ async fn process(castgc: &str, period: &str, account: &str, db: &mongodb::Client
 		})
 		.build()
 		.unwrap();
-    let mut form = collections::HashMap::new();
-    form.insert("account", account);
-    form.insert("curpage", "1");
-    form.insert("typeStatus", "1");
-    match period {
-        "week" => process_week(&mut form, client, db.database("report_week").collection(account)).await,
-        // "month" => format!("{}-{:02}-01", date.year(), date.month()).as_str(),
-        // "year" => format!("{}-01-01", date.year()).as_str(),
-        _ => return Err("Invalid period".into()),
-    }
-}
-
-async fn process_week(form: &mut collections::HashMap<&str, &str>, client: reqwest::Client, db: Collection<ReportData>) -> Result<String, Box<dyn std::error::Error>> {
+    let mut form: collections::HashMap<&str, String> = collections::HashMap::new();
+    form.insert("account", account.clone());
+    form.insert("curpage", "1".to_string());
+    form.insert("typeStatus", "1".to_string());
+    let date = chrono::Utc::now();
+    let coll: Collection<ReportData> = match period {
+        "week" => {
+            form.insert("dateStatus", "3".to_string());
+            db.database("report_week").collection(account.as_str())
+        }
+        "month" => {
+            let date_status = format!("{}-{:02}-01", date.year().clone(), date.month().clone());
+            form.insert("dateStatus", date_status);
+            db.database("report_month").collection(account.as_str())
+        },
+        _ => return Err("Invalid period".into())
+    };
     let api = "http://ecard.m.hust.edu.cn/wechat-web/QueryController/select.html";
-    
-    form.insert("dateStatus", "3");
     let mut trans: collections::HashMap<&str,(i32,f64)> = collections::HashMap::new();
     let mut meals: [Meal; 4] = core::array::from_fn(|_| Meal { count: 0, amount: 0.0 });
     let mut balance: f64 = -1.0;
@@ -197,13 +200,11 @@ async fn process_week(form: &mut collections::HashMap<&str, &str>, client: reqwe
             }
         }
         form.remove("curpage");
-        form.insert("curpage", data["nextpage"].as_str().unwrap());
+        form.insert("curpage", data["nextpage"].as_str().unwrap().to_string());
         if data["nextpage"].as_str().unwrap() == "0" {
             break;
         }
     };
-
-    let date = chrono::Utc::now();
 
     // Retrieve reports from the previous three weeks
     let mut trend = [
@@ -212,19 +213,40 @@ async fn process_week(form: &mut collections::HashMap<&str, &str>, client: reqwe
         Trend { count: 0, expense: 0.0 },
     ];
 
-    for i in 1..=3 {
-        let week_start = date - chrono::Duration::weeks(i);
-        let week_id = week_start.format("%Y%U").to_string();
-        if let Some(report) = db.find_one(doc! { "date": week_id }).await.unwrap() {
-            trend[(i-1) as usize] = Trend {
-                count: report.total_count,
-                expense: report.total_expense,
+    let fmtstr = match period {
+        "week" => {
+            for i in 1..=3 {
+                let week_start = date - chrono::Duration::weeks(i);
+                let week_id = week_start.format("%Y%U").to_string();
+                if let Some(report) = coll.find_one(doc! { "date": week_id }).await.unwrap() {
+                    trend[(i-1) as usize] = Trend {
+                        count: report.total_count,
+                        expense: report.total_expense,
+                    };
+                }
             };
-        }
-    }
+            "%Y%U"
+        },
+        "month" => {
+            let mut month_start = date.with_day(1).unwrap();
+            for i in 1..=3 {
+                month_start -= chrono::Duration::days(1);
+                month_start = month_start.with_day(1).unwrap();
+                let month_id = month_start.format("%Y%m").to_string();
+                if let Some(report) = coll.find_one(doc! { "date": month_id }).await.unwrap() {
+                    trend[(i-1) as usize] = Trend {
+                        count: report.total_count,
+                        expense: report.total_expense,
+                    };
+                }
+            };
+            "%Y%m"
+        },
+        _ => return Err("Invalid period".into())
+    };
 
     let result = ReportData {
-        date: date.format("%Y%U").to_string().parse().unwrap(),
+        date: date.format(fmtstr).to_string().parse().unwrap(),
         balance,
         total_expense,
         total_topup,
@@ -238,6 +260,6 @@ async fn process_week(form: &mut collections::HashMap<&str, &str>, client: reqwe
         dinner: meals[2].clone(),
         midnight_snack: meals[3].clone(),
     };
-    let id = db.insert_one(result).await.unwrap().inserted_id.as_object_id().unwrap().to_hex();
-    Ok(format!("report_week/{}/{}", form["account"], id))
+    let id = coll.insert_one(result).await.unwrap().inserted_id.as_object_id().unwrap().to_hex();
+    Ok(format!("report_{}/{}/{}", period, account, id))
 }
