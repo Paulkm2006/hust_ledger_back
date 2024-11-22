@@ -1,4 +1,4 @@
-# .github/workflows/build.yml
+# .github/workflows/rust.yml
 name: Build
 
 on:
@@ -16,14 +16,13 @@ jobs:
         uses: rust-build/rust-build.action@v1.4.5
         with:
           RUSTTARGET: x86_64-unknown-linux-musl
-          UPLOAD_MODE: release
+          UPLOAD_MODE: none
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Main binary
-          path: |
-            ${{ steps.compile.outputs.BUILT_ARCHIVE }}
-            ${{ steps.compile.outputs.BUILT_CHECKSUM }}
+          path: ${{ steps.compile.outputs.BUILT_ARCHIVE }}
+          compression-level: 0
   build-worker:
     name: Build worker
     runs-on: ubuntu-latest
@@ -35,11 +34,40 @@ jobs:
         with:
           SRC_DIR: "worker"
           RUSTTARGET: x86_64-unknown-linux-musl
-          UPLOAD_MODE: release
+          UPLOAD_MODE: none
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Worker binary
-          path: |
-            ${{ steps.compile.outputs.BUILT_ARCHIVE }}
-            ${{ steps.compile.outputs.BUILT_CHECKSUM }}
+          path: ${{ steps.compile.outputs.BUILT_ARCHIVE }}
+          compression-level: 0
+    pre-release:
+      name: "Pre Release"
+      runs-on: "ubuntu-latest"
+      needs: ["build-main", "build-worker"]
+      steps:
+        - name: Download main artifact
+          uses: actions/download-artifact@v4
+          with:
+            name: Main binary
+          
+        - name: Download worker artifact
+          uses: actions/download-artifact@v4
+          with:
+            name: Worker binary
+
+        - name: Decompress main artifact
+          run: unzip "${{ github.workspace }}/Main binary.zip" -d "${{ github.workspace }}/main"
+          run: unzip "${{ github.workspace }}/Worker binary.zip" -d "${{ github.workspace }}/worker"
+          run: unzip "${{ github.workspace }}/main/hust_ledger_back_null_x86_64-unknown-linux-musl.zip" -d "${{ github.workspace }}/main"
+          run: unzip "${{ github.workspace }}/worker/hust_ledger_back_null_x86_64-unknown-linux-musl.zip" -d "${{ github.workspace }}/worker"
+
+        - uses: "marvinpinto/action-automatic-releases@latest"
+          with:
+            repo_token: "${{ secrets.GITHUB_TOKEN }}"
+            automatic_release_tag: "latest"
+            prerelease: true
+            title: "Development Build"
+            files: |
+              "${{ github.workspace }}/main/main"
+              "${{ github.workspace }}/worker/worker"
