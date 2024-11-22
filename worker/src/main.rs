@@ -6,6 +6,7 @@ use serde::{Serialize, Deserialize};
 use std::time::Duration;
 use std::collections;
 use reqwest::{Client, header};
+use async_recursion::async_recursion;
 
 pub mod config;
 pub mod utils;
@@ -95,7 +96,7 @@ async fn main() {
     }
 }
 
-
+#[async_recursion]
 async fn process(castgc: &str, period: &str, account: String, db: &MongoClient, tag_db: &mut redis::Connection, recursion: Option<chrono::DateTime<Utc>>) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
     let cookie_store = reqwest::cookie::Jar::default();
     let jsession = utils::hust_login::get_jsession(castgc).await.unwrap();
@@ -283,7 +284,7 @@ async fn process(castgc: &str, period: &str, account: String, db: &MongoClient, 
                                 };
                             },
                             None => {
-                                Box::pin(process(castgc, "month", account.clone(), db, tag_db, Some(month_start))).await?;
+                                process(castgc, "month", account.clone(), db, tag_db, Some(month_start)).await?;
                                 let report = coll.find_one(doc! { "date": month_id }).await?.unwrap();
                                 trend[(i-1) as usize] = Trend {
                                     count: report.total_count,
