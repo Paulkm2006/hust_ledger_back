@@ -5,6 +5,7 @@ use serde::Deserialize;
 pub struct Config {
     pub db: Database,
     pub redis: Redis,
+    pub tags_db: TagsDB,
 }
 
 #[derive(Deserialize, Clone)]
@@ -14,6 +15,11 @@ pub struct Database {
 
 #[derive(Deserialize, Clone)]
 pub struct Redis {
+    pub url: String,
+}
+
+#[derive(Deserialize, Clone)]
+pub struct TagsDB {
     pub url: String,
 }
 

@@ -34,7 +34,7 @@ struct Trans{
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ReportData {
-    date: i32,
+    date: String,
     balance: f64,
     total_expense: f64,
     total_topup: f64,
@@ -43,6 +43,13 @@ pub struct ReportData {
     top_count: Trans,
     trend: [Trend; 3],
     cafeteria_count: i32,
+    cafeteria_amount: f64,
+    groceries_count: i32,
+    groceries_amount: f64,
+    logistics_count: i32,
+    logistics_amount: f64,
+    other_count: i32,
+    other_amount: f64,
     breakfast: Meal,
     lunch: Meal,
     dinner: Meal,

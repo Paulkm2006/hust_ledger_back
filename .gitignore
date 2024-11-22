@@ -1,3 +1,4 @@
 /target
 config.toml
 worker/target
+data

@@ -1,6 +1,6 @@
-use chrono::Datelike as _;
+use chrono::{Datelike as _, Utc};
 use redis::Commands;
-use mongodb::{Client as MongoClient, Collection, bson::doc};
+use mongodb::{bson::doc, Client as MongoClient, Collection};
 use redis::Client as RedisClient;
 use serde::{Serialize, Deserialize};
 use std::time::Duration;
@@ -39,7 +39,7 @@ struct Trans{
 
 #[derive(Serialize, Deserialize, Debug)]
 struct ReportData {
-    date: i32,
+    date: String,
     balance: f64,
     total_expense: f64,
     total_topup: f64,
@@ -48,6 +48,13 @@ struct ReportData {
     top_count: Trans,
     trend: [Trend; 3],
     cafeteria_count: i32,
+    cafeteria_amount: f64,
+    groceries_count: i32,
+    groceries_amount: f64,
+    logistics_count: i32,
+    logistics_amount: f64,
+    other_count: i32,
+    other_amount: f64,
     breakfast: Meal,
     lunch: Meal,
     dinner: Meal,
@@ -62,6 +69,9 @@ async fn main() {
     let redis_client = RedisClient::open(config.redis.url.as_str()).unwrap();
     let mut redis_connection = redis_client.get_connection().unwrap();
 
+    let tag_client = RedisClient::open(config.tags_db.url.as_str()).unwrap();
+    let mut tag_db = tag_client.get_connection().unwrap();
+
     loop {
         let queue: Vec<String> = redis_connection.keys("request:*").unwrap();
         for key in queue {
@@ -72,7 +82,7 @@ async fn main() {
             let account = t[1];
             let key_res = format!("result:{}:{}", account, period);
             let _: () = redis_connection.del(&key).unwrap();
-            let _:() = match process(castgc, period, account.to_string(), &mongo_client).await{
+            let _:() = match process(castgc, period, account.to_string(), &mongo_client, &mut tag_db, None).await{
                 Ok(id) => {
                     redis_connection.set(key_res, id).unwrap()
                 },
@@ -86,7 +96,7 @@ async fn main() {
 }
 
 
-async fn process(castgc: &str, period: &str, account: String, db: &mongodb::Client) -> Result<String, Box<dyn std::error::Error>> {
+async fn process(castgc: &str, period: &str, account: String, db: &MongoClient, tag_db: &mut redis::Connection, recursion: Option<chrono::DateTime<Utc>>) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
     let cookie_store = reqwest::cookie::Jar::default();
     let jsession = utils::hust_login::get_jsession(castgc).await.unwrap();
 	let url = reqwest::Url::parse("http://ecard.m.hust.edu.cn").unwrap();
@@ -115,7 +125,10 @@ async fn process(castgc: &str, period: &str, account: String, db: &mongodb::Clie
             db.database("report_week").collection(account.as_str())
         }
         "month" => {
-            let date_status = format!("{}-{:02}-01", date.year().clone(), date.month().clone());
+            let date_status = match recursion.clone() {
+                Some(t) => t.format("%Y-%m-01").to_string(),
+                None => date.format("%Y-%m-01").to_string()
+            };
             form.insert("dateStatus", date_status);
             db.database("report_month").collection(account.as_str())
         },
@@ -139,6 +152,14 @@ async fn process(castgc: &str, period: &str, account: String, db: &mongodb::Clie
         count: 0,
     };
     let mut cafeteria_count: i32 = 0;
+    let mut cafeteria_amount: f64 = 0.0;
+    let mut groceries_count: i32 = 0;
+    let mut groceries_amount: f64 = 0.0;
+    let mut logistics_count: i32 = 0;
+    let mut logistics_amount: f64 = 0.0;
+    let mut other_count: i32 = 0;
+    let mut other_amount: f64 = 0.0;
+
     loop{
         let res = client.get(api).query(&form).send().await.unwrap();
         let text = &res.text().await.unwrap();
@@ -158,6 +179,7 @@ async fn process(castgc: &str, period: &str, account: String, db: &mongodb::Clie
             }
             let mut occtime = item["occtime"].as_str().unwrap().parse::<i64>()?;
             let mercname = item["mercname"].as_str().unwrap();
+            let mercacc = item["mercacc"].as_str().unwrap();
             let mut tranamt = item["tranamt"].as_str().unwrap().parse::<f64>()?;
             tranamt /= 100.0;
             total_expense += tranamt;
@@ -185,19 +207,35 @@ async fn process(castgc: &str, period: &str, account: String, db: &mongodb::Clie
                 };
             }
 
-            if mercname.contains("组") || mercname.contains("百景") || mercname.contains("食堂") || mercname.contains("饭") {
-                occtime %= 1000000;
-                let idx = match occtime {
-                    60000..=90000 => 0,
-                    110000..=140000 => 1,
-                    170000..=200000 => 2,
-                    220000..=240000 => 3,
-                    _ => continue,
-                };
-                cafeteria_count += 1;
-                meals[idx].count += 1;
-                meals[idx].amount += tranamt;
-            }
+            let tag: String = tag_db.get(mercacc).unwrap_or("OTH".to_string());
+            match tag.as_str() {
+                "CAF" => {
+                    occtime %= 1000000;
+                    let idx = match occtime {
+                        60000..=90000 => 0,
+                        110000..=140000 => 1,
+                        170000..=200000 => 2,
+                        220000..=240000 => 3,
+                        _ => continue,
+                    };
+                    cafeteria_count += 1;
+                    cafeteria_amount += tranamt;
+                    meals[idx].count += 1;
+                    meals[idx].amount += tranamt;
+                },
+                "GRO" => {
+                    groceries_count += 1;
+                    groceries_amount += tranamt;
+                },
+                "LOG" => {
+                    logistics_count += 1;
+                    logistics_amount += tranamt;
+                },
+                _ => {
+                    other_count += 1;
+                    other_amount += tranamt;
+                }
+            };
         }
         form.remove("curpage");
         form.insert("curpage", data["nextpage"].as_str().unwrap().to_string());
@@ -206,47 +244,62 @@ async fn process(castgc: &str, period: &str, account: String, db: &mongodb::Clie
         }
     };
 
-    // Retrieve reports from the previous three weeks
+    
     let mut trend = [
         Trend { count: 0, expense: 0.0 },
         Trend { count: 0, expense: 0.0 },
         Trend { count: 0, expense: 0.0 },
     ];
 
-    let fmtstr = match period {
-        "week" => {
-            for i in 1..=3 {
-                let week_start = date - chrono::Duration::weeks(i);
-                let week_id = week_start.format("%Y%U").to_string();
-                if let Some(report) = coll.find_one(doc! { "date": week_id }).await.unwrap() {
-                    trend[(i-1) as usize] = Trend {
-                        count: report.total_count,
-                        expense: report.total_expense,
+    
+    let fmtstr = match recursion {
+        Some(t) => t.format("%Y%m").to_string(),
+        None => {
+            match period {
+                "week" => {
+                    for i in 1..=3 {
+                        let week_start = date - chrono::Duration::weeks(i);
+                        let week_id = week_start.format("%Y%U").to_string();
+                        if let Some(report) = coll.find_one(doc! { "date": week_id.clone() }).await? {
+                            trend[(i-1) as usize] = Trend {
+                                count: report.total_count,
+                                expense: report.total_expense,
+                            };
+                        };
                     };
-                }
-            };
-            "%Y%U"
-        },
-        "month" => {
-            let mut month_start = date.with_day(1).unwrap();
-            for i in 1..=3 {
-                month_start -= chrono::Duration::days(1);
-                month_start = month_start.with_day(1).unwrap();
-                let month_id = month_start.format("%Y%m").to_string();
-                if let Some(report) = coll.find_one(doc! { "date": month_id }).await.unwrap() {
-                    trend[(i-1) as usize] = Trend {
-                        count: report.total_count,
-                        expense: report.total_expense,
+                    date.format("%Y%U").to_string()
+                },
+                "month" => {
+                    let mut month_start = date.with_day(1).unwrap();
+                    for i in 1 as i64..=3 {
+                        month_start -= chrono::Duration::days(1);
+                        month_start = month_start.with_day(1).unwrap();
+                        let month_id = month_start.format("%Y%m").to_string();
+                        match coll.find_one(doc! { "date": month_id.clone() }).await.unwrap() {
+                            Some(report) => {
+                                trend[(i-1) as usize] = Trend {
+                                    count: report.total_count,
+                                    expense: report.total_expense,
+                                };
+                            },
+                            None => {
+                                Box::pin(process(castgc, "month", account.clone(), db, tag_db, Some(month_start))).await?;
+                                let report = coll.find_one(doc! { "date": month_id }).await?.unwrap();
+                                trend[(i-1) as usize] = Trend {
+                                    count: report.total_count,
+                                    expense: report.total_expense,
+                                };
+                            }
+                        }
                     };
-                }
-            };
-            "%Y%m"
-        },
-        _ => return Err("Invalid period".into())
+                    date.format("%Y%m").to_string()
+                },
+                _ => return Err("Invalid period".into())
+            }
+        }
     };
-
     let result = ReportData {
-        date: date.format(fmtstr).to_string().parse().unwrap(),
+        date: fmtstr,
         balance,
         total_expense,
         total_topup,
@@ -255,6 +308,13 @@ async fn process(castgc: &str, period: &str, account: String, db: &mongodb::Clie
         top_count,
         trend,
         cafeteria_count,
+        cafeteria_amount,
+        groceries_count,
+        groceries_amount,
+        logistics_count,
+        logistics_amount,
+        other_count,
+        other_amount,
         breakfast: meals[0].clone(),
         lunch: meals[1].clone(),
         dinner: meals[2].clone(),
