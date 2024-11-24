@@ -5,6 +5,31 @@
 		"tag": "OTH"
 	},
 	{
+		"mercacc": 1000003,
+		"mercname": "百惠园一楼特色烤肉饭",
+		"tag": "CAF"
+	},
+	{
+		"mercacc": 1000004,
+		"mercname": "百惠园一楼快餐",
+		"tag": "CAF"
+	},
+	{
+		"mercacc": 1000005,
+		"mercname": "百惠园一楼襄阳牛肉面",
+		"tag": "CAF"
+	},
+	{
+		"mercacc": 1000006,
+		"mercname": "百惠园一楼蒸点",
+		"tag": "CAF"
+	},
+	{
+		"mercacc": 1000007,
+		"mercname": "百惠园一楼水吧",
+		"tag": "CAF"
+	},
+	{
 		"mercacc": 1000019,
 		"mercname": "百景一楼川渝特色",
 		"tag": "CAF"
@@ -45,8 +70,18 @@
 		"tag": "CAF"
 	},
 	{
+		"mercacc": 1000033,
+		"mercname": "学一天山风味",
+		"tag": "CAF"
+	},
+	{
 		"mercacc": 1000034,
 		"mercname": "学一兰州拉面",
+		"tag": "CAF"
+	},
+	{
+		"mercacc": 1000037,
+		"mercname": "喻园卤菜",
 		"tag": "CAF"
 	},
 	{
@@ -60,8 +95,18 @@
 		"tag": "CAF"
 	},
 	{
+		"mercacc": 1000041,
+		"mercname": "喻园煎烙",
+		"tag": "CAF"
+	},
+	{
 		"mercacc": 1000043,
 		"mercname": "喻园面条",
+		"tag": "CAF"
+	},
+	{
+		"mercacc": 1000050,
+		"mercname": "集贤楼食堂煎烙",
 		"tag": "CAF"
 	},
 	{
@@ -70,14 +115,39 @@
 		"tag": "CAF"
 	},
 	{
+		"mercacc": 1000074,
+		"mercname": "西一一楼风味铁板饭",
+		"tag": "CAF"
+	},
+	{
+		"mercacc": 1000087,
+		"mercname": "西二二楼自选组",
+		"tag": "CAF"
+	},
+	{
 		"mercacc": 1000090,
 		"mercname": "集锦园蔡明纬",
 		"tag": "CAF"
 	},
 	{
+		"mercacc": 1000092,
+		"mercname": "集锦园油炸",
+		"tag": "CAF"
+	},
+	{
 		"mercacc": 1000095,
 		"mercname": "集锦园饮料",
-		"tag": "GRO"
+		"tag": "CAF"
+	},
+	{
+		"mercacc": 1000096,
+		"mercname": "集锦园馄饨",
+		"tag": "CAF"
+	},
+	{
+		"mercacc": 1000101,
+		"mercname": "西一二楼风味四川风味",
+		"tag": "CAF"
 	},
 	{
 		"mercacc": 1000102,
@@ -85,9 +155,39 @@
 		"tag": "CAF"
 	},
 	{
+		"mercacc": 1000103,
+		"mercname": "西一二楼风味粤式风味",
+		"tag": "CAF"
+	},
+	{
+		"mercacc": 1000104,
+		"mercname": "西一二楼风味北方风味",
+		"tag": "CAF"
+	},
+	{
+		"mercacc": 1000110,
+		"mercname": "西一二楼白案",
+		"tag": "CAF"
+	},
+	{
+		"mercacc": 1000111,
+		"mercname": "西一二楼小炒",
+		"tag": "CAF"
+	},
+	{
+		"mercacc": 1000112,
+		"mercname": "西一二楼商店",
+		"tag": "GRO"
+	},
+	{
+		"mercacc": 1000113,
+		"mercname": "西一二楼拌面",
+		"tag": "CAF"
+	},
+	{
 		"mercacc": 1000115,
 		"mercname": "学二一楼饮料",
-		"tag": "GRO"
+		"tag": "CAF"
 	},
 	{
 		"mercacc": 1000116,
@@ -155,6 +255,11 @@
 		"tag": "CAF"
 	},
 	{
+		"mercacc": 1000143,
+		"mercname": "东教工蒸点",
+		"tag": "CAF"
+	},
+	{
 		"mercacc": 1000144,
 		"mercname": "东教工烧烤",
 		"tag": "CAF"
@@ -175,8 +280,23 @@
 		"tag": "CAF"
 	},
 	{
+		"mercacc": 1000148,
+		"mercname": "韵苑风味拉面",
+		"tag": "CAF"
+	},
+	{
+		"mercacc": 1000149,
+		"mercname": "韵苑风味蒸点",
+		"tag": "CAF"
+	},
+	{
 		"mercacc": 1000151,
 		"mercname": "韵苑风味馄饨",
+		"tag": "CAF"
+	},
+	{
+		"mercacc": 1000152,
+		"mercname": "韵苑风味煎烙",
 		"tag": "CAF"
 	},
 	{
@@ -220,13 +340,48 @@
 		"tag": "GRO"
 	},
 	{
+		"mercacc": 1000193,
+		"mercname": "百惠园超市柜二",
+		"tag": "GRO"
+	},
+	{
+		"mercacc": 1000194,
+		"mercname": "百惠园超市柜三",
+		"tag": "GRO"
+	},
+	{
+		"mercacc": 1000196,
+		"mercname": "集贸超市柜二",
+		"tag": "GRO"
+	},
+	{
 		"mercacc": 1000205,
 		"mercname": "百景二楼自选组",
 		"tag": "CAF"
 	},
 	{
+		"mercacc": 1000212,
+		"mercname": "学二二楼酱香饼",
+		"tag": "CAF"
+	},
+	{
+		"mercacc": 1000213,
+		"mercname": "学二二楼曾麻子热干面",
+		"tag": "CAF"
+	},
+	{
 		"mercacc": 1000214,
 		"mercname": "学二二楼五谷鱼粉",
+		"tag": "CAF"
+	},
+	{
+		"mercacc": 1000215,
+		"mercname": "学二二楼粉丝煲",
+		"tag": "CAF"
+	},
+	{
+		"mercacc": 1000217,
+		"mercname": "学二二楼卤肉饭",
 		"tag": "CAF"
 	},
 	{
@@ -245,6 +400,11 @@
 		"tag": "CAF"
 	},
 	{
+		"mercacc": 1000281,
+		"mercname": "百景一楼荆楚风味",
+		"tag": "CAF"
+	},
+	{
 		"mercacc": 1000284,
 		"mercname": "东园三楼快餐组",
 		"tag": "CAF"
@@ -260,6 +420,11 @@
 		"tag": "CAF"
 	},
 	{
+		"mercacc": 1000292,
+		"mercname": "东一一楼皇家烤官",
+		"tag": "CAF"
+	},
+	{
 		"mercacc": 1000294,
 		"mercname": "东一二楼特色拌饭",
 		"tag": "CAF"
@@ -267,6 +432,11 @@
 	{
 		"mercacc": 1000295,
 		"mercname": "东一一楼蒸点稀食",
+		"tag": "CAF"
+	},
+	{
+		"mercacc": 1000302,
+		"mercname": "东一一楼水吧",
 		"tag": "CAF"
 	},
 	{
@@ -295,9 +465,19 @@
 		"tag": "CAF"
 	},
 	{
+		"mercacc": 1000312,
+		"mercname": "东教工煎烙",
+		"tag": "CAF"
+	},
+	{
 		"mercacc": 2000091,
 		"mercname": "校园网网费",
 		"tag": "LOG"
+	},
+	{
+		"mercacc": 2000093,
+		"mercname": "集贤楼档口拉面",
+		"tag": "CAF"
 	},
 	{
 		"mercacc": 2000094,
@@ -335,6 +515,11 @@
 		"tag": "CAF"
 	},
 	{
+		"mercacc": 2000146,
+		"mercname": "学二二楼小碗菜",
+		"tag": "CAF"
+	},
+	{
 		"mercacc": 2000149,
 		"mercname": "学二二楼荷叶炒饭",
 		"tag": "CAF"
@@ -355,9 +540,29 @@
 		"tag": "CAF"
 	},
 	{
+		"mercacc": 2000183,
+		"mercname": "学二二楼包子组",
+		"tag": "CAF"
+	},
+	{
+		"mercacc": 2000193,
+		"mercname": "西二一楼特色小炒",
+		"tag": "CAF"
+	},
+	{
 		"mercacc": 2000205,
 		"mercname": "后勤开水机",
 		"tag": "LOG"
+	},
+	{
+		"mercacc": 2000214,
+		"mercname": "学一餐（水）吧",
+		"tag": "CAF"
+	},
+	{
+		"mercacc": 2000215,
+		"mercname": "学一小碗菜",
+		"tag": "CAF"
 	},
 	{
 		"mercacc": 2000216,
@@ -367,6 +572,11 @@
 	{
 		"mercacc": 2000217,
 		"mercname": "学一特色面",
+		"tag": "CAF"
+	},
+	{
+		"mercacc": 2000218,
+		"mercname": "西二二楼麻辣烫",
 		"tag": "CAF"
 	}
 ]

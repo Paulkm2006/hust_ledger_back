@@ -34,6 +34,8 @@ const MEAL_TIME_RANGES: [(i64, i64, usize); 4] = [
     (170000, 200000, 2), // dinner
     (220000, 240000, 3), // midnight snack
 ];
+const CAF_NAME: [&str; 14] = ["百惠", "百景", "集锦", "东一", "东二", "东三", "学一", "学二", "喻园", "食堂", "紫荆园", "西一", "西二", "东园"];
+const GRO_NAME: [&str; 2] = ["超市", "商店"];
 
 struct RedisConnections {
     main: redis::Connection,
@@ -288,7 +290,7 @@ untagged_db: &mut redis::Connection)
                 };
             }
 
-            let tag: String = tag_db.get(mercacc).unwrap_or("OTH".to_string());
+            let tag: String = tag_db.get(mercacc).unwrap_or(process_untagged(untagged_db, tag_db, &mercacc.to_string(), &mercname));
             match tag.as_str() {
                 "CAF" => {
                     occtime %= 1000000;
@@ -296,9 +298,9 @@ untagged_db: &mut redis::Connection)
                         .find(|(start, end, _)| occtime >= *start && occtime <= *end) {
                         meals[*idx].count += 1;
                         meals[*idx].amount += tranamt;
-                        cafeteria_amount += tranamt;
-                        cafeteria_count += 1;
                     }
+                    cafeteria_amount += tranamt;
+                    cafeteria_count += 1;
                 },
                 "GRO" => {
                     groceries_count += 1;
@@ -312,11 +314,7 @@ untagged_db: &mut redis::Connection)
                     other_count += 1;
                     other_amount += tranamt;
                 }
-                _ => {
-                    other_count += 1;
-                    other_amount += tranamt;
-                    let _:() = untagged_db.set(mercacc, mercname).unwrap();
-                }
+                _ => {}
             };
         }
         form.remove("curpage");
@@ -400,4 +398,21 @@ untagged_db: &mut redis::Connection)
     };
     let id = coll.insert_one(result).await.unwrap().inserted_id.as_object_id().unwrap().to_hex();
     Ok(format!("report_{}/{}/{}", period, account, id))
+}
+
+fn process_untagged(untagged_db: &mut redis::Connection, tags_db: &mut redis::Connection, mercacc: &String, mercname: &String) -> String{
+    for i in CAF_NAME.iter() {
+        if mercname.contains(i) {
+            let _:() = tags_db.set(mercacc, "CAF").unwrap();
+            return "CAF".to_string();
+        }
+    };
+    for i in GRO_NAME.iter() {
+        if mercname.contains(i) {
+            let _:() = tags_db.set(mercacc, "GRO").unwrap();
+            return "GRO".to_string();
+        }
+    };
+    let _:() = untagged_db.set(mercacc, mercname).unwrap();
+    "OTH".to_string()
 }
