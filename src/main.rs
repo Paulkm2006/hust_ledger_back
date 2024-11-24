@@ -22,6 +22,7 @@ async fn main() -> std::io::Result<()> {
     let mongo_client_options = ClientOptions::parse(&config.db.url).await.unwrap();
     let mongo_client = MongoClient::with_options(mongo_client_options).unwrap();
     let redis_client = RedisClient::open(config.redis.url.as_str()).unwrap();
+    let tags_client = RedisClient::open(config.tags_db.url.as_str()).unwrap();
 
     let server_host = config.server.host.clone();
     let server_port = config.server.port;
@@ -31,6 +32,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(config.clone()))
             .app_data(web::Data::new(mongo_client.clone()))
             .app_data(web::Data::new(redis_client.clone()))
+            .app_data(web::Data::new(tags_client.clone()))
             .wrap(Logger::new("%{r}a %r %s"))
             .configure(router::router::config)
     });

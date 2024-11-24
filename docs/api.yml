@@ -177,6 +177,29 @@ paths:
           description: Internal Error
         '400':
           description: Bad request
+  /tags:
+    get:
+      summary: Get tags list
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tag'
+              example:
+                - mercacc: '123456'
+                  tag: 'CAF'
+                - mercacc: '123456'
+                  tag: 'GRO'
+                - mercacc: '123456'
+                  tag: 'LOG'
+                - mercacc: '123456'
+                  tag: 'OTH'
+        '500':
+          description: Internal Error
 
 
 components:
@@ -211,6 +234,15 @@ components:
         img_base64:
           type: string
           description: Base64 encoded captcha image
+    Tag:
+      type: object
+      properties:
+        mercacc:
+          type: string
+          description: Merchant account 
+        tag:
+          type: string
+          description: Tag, can be one of [CAF, GRO, LOG, OTH]
     Expense:
       type: object
       properties:

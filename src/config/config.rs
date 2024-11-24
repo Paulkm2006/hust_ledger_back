@@ -6,6 +6,7 @@ pub struct Config {
     pub db: Database,
     pub redis: Redis,
     pub server: Server,
+    pub tags_db: TagsDB,
 }
 
 #[derive(Deserialize, Clone)]
@@ -22,6 +23,11 @@ pub struct Redis {
 pub struct Server {
     pub host: String,
     pub port: u16,
+}
+
+#[derive(Deserialize, Clone)]
+pub struct TagsDB {
+    pub url: String,
 }
 
 pub fn init_config(path: &str) -> Result<Config, Box<dyn std::error::Error>> {

@@ -10,4 +10,8 @@ pub fn config(cfg: &mut web::ServiceConfig) {
 	cfg.service(
 		web::scope("/report").route("", web::get().to(controller::report::report))
 	);
+	cfg.service(
+		web::scope("/tags")
+			.route("", web::get().to(controller::tags::get_tags))
+	);
 }

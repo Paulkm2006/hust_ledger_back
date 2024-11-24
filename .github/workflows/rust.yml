@@ -41,32 +41,3 @@ jobs:
           name: Worker binary
           path: ${{ steps.compile.outputs.BUILT_ARCHIVE }}
           compression-level: 0
-  pre-release:
-    name: "Pre Release"
-    runs-on: "ubuntu-latest"
-    needs: ["build-main", "build-worker"]
-    steps:
-      - name: Download main artifact
-        uses: actions/download-artifact@v4
-
-      - name: Decompress main artifact
-        run: |
-          ls -l
-          mkdir main_dir
-          mkdir worker_dir
-          unzip "Main binary" -d "main_dir/"
-          unzip "Worker binary" -d "worker_dir/"
-          ls -l
-          unzip "main_dir/hust_ledger_back_null_x86_64-unknown-linux-musl.zip"
-          unzip "worker_dir/hust_ledger_back_null_x86_64-unknown-linux-musl.zip"
-          ls -l
-
-      - uses: "marvinpinto/action-automatic-releases@latest"
-        with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "latest"
-          prerelease: true
-          title: "Development Build"
-          files: |
-            "hust_ledger_back"
-            "worker"
