@@ -3,7 +3,7 @@ info:
   title: HUSTPass authentication API
   version: 1.0.0
 servers:
-  - url: https://ali.idc.codes
+  - url: https://paulkm.ac.cn/hust_ledger
     description: Production server
 paths:
   /login:

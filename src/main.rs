@@ -9,6 +9,8 @@ use env_logger::Env;
 use mongodb::{Client as MongoClient, options::ClientOptions};
 use redis::Client as RedisClient;
 
+type TagsClient = Option<RedisClient>;
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let config = match config::config::init_config("config.toml") {
@@ -22,7 +24,7 @@ async fn main() -> std::io::Result<()> {
     let mongo_client_options = ClientOptions::parse(&config.db.url).await.unwrap();
     let mongo_client = MongoClient::with_options(mongo_client_options).unwrap();
     let redis_client = RedisClient::open(config.redis.url.as_str()).unwrap();
-    let tags_client = RedisClient::open(config.tags_db.url.as_str()).unwrap();
+    let tags_client: TagsClient = Some(RedisClient::open(config.tags_db.url.as_str()).unwrap());
 
     let server_host = config.server.host.clone();
     let server_port = config.server.port;
