@@ -6,6 +6,7 @@ pub struct Config {
     pub db: Database,
     pub redis: Redis,
     pub tags_db: TagsDB,
+    pub untagged_db: UntaggedDB,
 }
 
 #[derive(Deserialize, Clone)]
@@ -20,6 +21,10 @@ pub struct Redis {
 
 #[derive(Deserialize, Clone)]
 pub struct TagsDB {
+    pub url: String,
+}
+#[derive(Deserialize, Clone)]
+pub struct UntaggedDB {
     pub url: String,
 }
 

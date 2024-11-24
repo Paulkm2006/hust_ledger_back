@@ -26,12 +26,11 @@ async fn main() -> std::io::Result<()> {
     let redis_client = RedisClient::open(config.redis.url.as_str()).unwrap();
     let tags_client: TagsClient = Some(RedisClient::open(config.tags_db.url.as_str()).unwrap());
 
-    let server_host = config.server.host.clone();
+    let server_host = config.server.host;
     let server_port = config.server.port;
 
     let server = HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(config.clone()))
             .app_data(web::Data::new(mongo_client.clone()))
             .app_data(web::Data::new(redis_client.clone()))
             .app_data(web::Data::new(tags_client.clone()))
