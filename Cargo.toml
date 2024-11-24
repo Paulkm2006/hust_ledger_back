@@ -19,3 +19,5 @@ env_logger = "0.11"
 redis = "0.27"
 config-file = "*"
 mongodb = "3.1"
+image = { version = "*", features = ["gif"] }
+tesseract = "0.15.1"

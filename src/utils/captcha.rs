@@ -1,5 +1,5 @@
 use regex::Regex;
-use base64::{engine::general_purpose, Engine as _};
+use super::ocr;
 use serde::Serialize;
 use actix_web::{HttpResponse, Responder};
 use reqwest::Client;
@@ -51,7 +51,7 @@ pub async fn get_captcha() -> Result<impl Responder, Box<dyn std::error::Error>>
 		}
 	};
 	let img = captcha.bytes().await.unwrap();
-	let img_base64 = general_purpose::STANDARD.encode(img.as_ref());
+	let img_base64 = ocr::decode_captcha(img).await.unwrap();
 
 
 	Ok(HttpResponse::Ok().json(Captcha {
