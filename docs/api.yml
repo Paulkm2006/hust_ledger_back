@@ -19,15 +19,6 @@ paths:
                     type: string
                   password:
                     type: string
-                  lt:
-                    type: string
-                    description: Login token, should be the same as in the captcha response
-                  jsessionid:
-                    type: string
-                    description: Login JSESSIONID, should be the same as in the captcha response
-                  code:
-                    type: string
-                    description: Captcha code
         responses:
           '200':
             description: OK
@@ -57,30 +48,6 @@ paths:
               application/json:
                 schema:
                   $ref: '#/components/schemas/LoginResponse'
-  /login/captcha:
-    get:
-      summary: Get captcha
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CaptchaResponse'
-              example:
-                status: 200
-                msg: Success
-                ticket: LT-...-...-cas
-                jsessionid: ...!...
-                img_base64: ...
-        '500':
-          description: Internal Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CaptchaResponse'
-        '400':
-          description: Bad request
   /report:
     get:
       summary: Report
@@ -216,24 +183,6 @@ components:
         castgc:
           type: string
           description: CASTGC for HUSTPASS
-    CaptchaResponse:
-      type: object
-      properties:
-        status:
-          type: integer
-          description: Status code
-        msg:
-          type: string
-          description: Message
-        ticket:
-          type: string
-          description: lt for following login request
-        jsessionid:
-          type: string
-          description: JSESSIONID for following login request
-        img_base64:
-          type: string
-          description: Base64 encoded captcha image
     Tag:
       type: object
       properties:

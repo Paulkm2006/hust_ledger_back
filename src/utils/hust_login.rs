@@ -11,9 +11,6 @@ use rsa::pkcs8::DecodePublicKey;
 pub struct Credential {
 	username: String,
 	password: String,
-	lt: String,
-	code: String,
-	jsessionid: String,
 }
 
 
@@ -59,9 +56,17 @@ pub async fn get_account_no(castgc: &str) -> Result<String, Box<dyn std::error::
 }
 
 pub async fn login(cred: web::Json<Credential>) -> Result<impl Responder, Box<dyn std::error::Error>> {
+	let (lt, jsession, code) = match super::captcha::get_captcha().await{
+		Ok((lt, jsession, code)) => (lt, jsession, code),
+		Err(e) => return Ok(HttpResponse::InternalServerError().json(Info{
+			status: 500,
+			msg: format!("Failed to get captcha: {}", e),
+			castgc: "".to_string(),
+		})),
+	};
 	let cookie_store = reqwest::cookie::Jar::default();
 	let url = reqwest::Url::parse("https://pass.hust.edu.cn").unwrap();
-	cookie_store.add_cookie_str(("JSESSIONID=".to_owned() + &cred.jsessionid).as_str(), &url);
+	cookie_store.add_cookie_str(("JSESSIONID=".to_owned() + &jsession).as_str(), &url);
 	let mut client = Client::builder()
 		.redirect(reqwest::redirect::Policy::none())
 		.cookie_provider(cookie_store.into())
@@ -74,9 +79,8 @@ pub async fn login(cred: web::Json<Credential>) -> Result<impl Responder, Box<dy
 			headers.insert(header::CONNECTION, "keep-alive".parse().unwrap());
 			headers
 		})
-		.build()
-		.unwrap();
-	let castgc = match get_castgc(cred, &mut client).await{
+		.build()?;
+	let castgc = match get_castgc(cred, lt, code, &mut client).await{
 		Ok(castgc) => castgc,
 		Err(e) => return Ok(HttpResponse::Forbidden().json(Info{
 			status: 403,
@@ -92,7 +96,7 @@ pub async fn login(cred: web::Json<Credential>) -> Result<impl Responder, Box<dy
 }
 
 
-async fn get_castgc(cred: web::Json<Credential>, client: &mut Client) -> Result<String, Box<dyn std::error::Error>> {
+async fn get_castgc(cred: web::Json<Credential>,lt: String, code: String, client: &mut Client) -> Result<String, Box<dyn std::error::Error>> {
 	let url = "https://pass.hust.edu.cn/cas/login?service=http%3A%2F%2Fecard.m.hust.edu.cn%3A80%2Fwechat-web%2FQueryController%2Fselect.html";
 	let rsa_url = "https://pass.hust.edu.cn/cas/rsa";
 
@@ -109,7 +113,7 @@ async fn get_castgc(cred: web::Json<Credential>, client: &mut Client) -> Result<
 	let pl = general_purpose::STANDARD.encode(pl_vec.as_ref() as &[u8]);
 
 	let res = client.post(url)
-		.form(&[("ul", ul), ("pl", pl), ("lt", cred.lt.clone()), ("code", cred.code.clone()), 
+		.form(&[("ul", ul), ("pl", pl), ("lt", lt), ("code", code[..4].to_string()), 
 				("rsa", "".to_string()), ("phoneCode", "".to_string()), ("execution", "e1s1".to_string()), 
 				("_eventId", "submit".to_string())])
 		.send().await?;
