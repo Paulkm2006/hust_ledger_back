@@ -36,3 +36,10 @@ pub fn init_config(path: &str) -> Result<Config, Box<dyn std::error::Error>> {
 		Err(e) => Err(Box::new(e)),
 	}
 }
+
+pub fn init_config_from_str(text: &str) -> Result<Config, Box<dyn std::error::Error>> {
+    match toml::from_str(text){
+        Ok(config) => Ok(config),
+        Err(e) => Err(Box::new(e)),
+    }
+}
