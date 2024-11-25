@@ -22,6 +22,6 @@ pub async fn decode_captcha(img: Bytes) -> Result<String, Box<dyn std::error::Er
 			}
 		}
 	}
-	let text = tesseract::ocr_from_frame(img.into_raw().as_slice(), 90, 58, 1, 1, "num")?;
+	let text = tesseract::ocr_from_frame(img.into_raw().as_slice(), 90, 58, 1, 90, "eng")?;
 	Ok(text)
 }
