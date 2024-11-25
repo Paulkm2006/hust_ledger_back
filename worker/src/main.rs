@@ -28,6 +28,10 @@ pub enum WorkerError {
     ParseIntError(#[from] std::num::ParseIntError),
     #[error("Parse float error: {0}")]
     ParseFloatError(#[from] std::num::ParseFloatError),
+    #[error("Reqwest error: {0}")]
+    ReqwestError(#[from] reqwest::Error),
+    #[error("Serde JSON error: {0}")]
+    SerdeJsonError(#[from] serde_json::Error),
 }
 
 const REFRESH_INTERVAL: u64 = 5;
@@ -147,6 +151,7 @@ async fn main() {
 async fn process_queue(mongo_client: &MongoClient, redis_conns: &mut RedisConnections) {
     let queue: Vec<String> = redis_conns.main.keys("request:*").unwrap();
     for key in queue {
+        println!("Processing: {}", key);
         let castgc: String = redis_conns.main.get(&key).unwrap();
         let castgc: &str = castgc.split(":").collect::<Vec<&str>>()[1];
         let t = key.split(":").collect::<Vec<&str>>();
@@ -272,10 +277,10 @@ untagged_db: &mut redis::Connection)
     let mut other_amount: f64 = 0.0;
 
     loop{
-        let res = client.get(api).query(&form).send().await.unwrap();
-        let text = &res.text().await.unwrap();
+        let res = client.get(api).query(&form).send().await?;
+        let text = &res.text().await?;
         let text = &text[9..text.len()-1];
-        let data: serde_json::Value = serde_json::from_str(&text).unwrap();
+        let data: serde_json::Value = serde_json::from_str(&text)?;
         if balance == -1.0 {
             balance = data["total"][0]["cardbal"].as_str().unwrap().parse::<f64>()? / 100.0;
         }
