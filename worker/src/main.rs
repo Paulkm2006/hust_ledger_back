@@ -167,46 +167,10 @@ async fn process_queue(mongo_client: &MongoClient, redis_conns: &mut RedisConnec
                 redis_conns.main.set(key_res, format!("error: {}", e)).unwrap()
             }
         };
+        println!("Done: {}", key);
     }
 }
 
-async fn calculate_trends(period: &str, date: chrono::DateTime<Utc>, coll: &Collection<ReportData>, 
-    castgc: &str, account: &str, db: &MongoClient, tag_db: &mut redis::Connection, untagged_db: &mut redis::Connection) 
-    -> Result<[Trend; 3], WorkerError> {
-    let mut trends = [Trend { count: 0, expense: 0.0 }; 3];
-    
-    match period {
-        "week" => {
-            for i in 1..=3 {
-                let week_start = date - chrono::Duration::weeks(i);
-                let week_id = week_start.format("%Y%U").to_string();
-                if let Some(report) = coll.find_one(doc! { "date": &week_id }).await? {
-                    trends[i as usize -1] = Trend { count: report.total_count, expense: report.total_expense };
-                }
-            }
-        },
-        "month" => {
-            let mut month_start = date.with_day(1).unwrap();
-            for i in 1..=3 {
-                month_start = (month_start - chrono::Duration::days(1)).with_day(1).unwrap();
-                let month_id = month_start.format("%Y%m").to_string();
-                
-                trends[i-1] = match coll.find_one(doc! { "date": &month_id }).await? {
-                    Some(report) => Trend { count: report.total_count, expense: report.total_expense },
-                    None => {
-                        process(castgc, "month", account.to_string(), db, tag_db, 
-                               Some(month_start), untagged_db).await?;
-                        let report = coll.find_one(doc! { "date": month_id }).await?.unwrap();
-                        Trend { count: report.total_count, expense: report.total_expense }
-                    }
-                };
-            }
-        },
-        _ => return Err(WorkerError::InvalidPeriod(period.to_string()))
-    }
-    
-    Ok(trends)
-}
 
 #[async_recursion]
 async fn process(castgc: &str, period: &str, account: String, 
@@ -357,9 +321,7 @@ untagged_db: &mut redis::Connection)
     };
 
     
-    let mut trend = calculate_trends(period, date, &coll, castgc, &account, db, tag_db, untagged_db).await?;
-
-    
+    let mut trend = [Trend { count: 0, expense: 0.0 }; 3];
     let fmtstr = match recursion {
         Some(t) => t.format("%Y%m").to_string(),
         None => {
