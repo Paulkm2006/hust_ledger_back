@@ -4,7 +4,7 @@ use std::io::Cursor;
 use image::{DynamicImage, AnimationDecoder};
 
 pub async fn decode_captcha(img: Bytes) -> Result<String, Box<dyn std::error::Error>> {
-	let g: GifDecoder<Cursor<Bytes>> = GifDecoder::new(Cursor::new(img))?;
+	let g: GifDecoder<Cursor<Bytes>> = GifDecoder::new(Cursor::new(img)).map_err(|e| format!("Failed to create GifDecoder: {}", e))?;
 	let frames: Vec<_> = g.into_frames().collect::<Result<_, _>>()?;
 	let grayscale_frames: Vec<_> = frames.iter().map(|f| DynamicImage::ImageRgba8(f.buffer().clone()).into_luma8()).collect();
 	let mut img: image::ImageBuffer<image::Luma<u8>, Vec<u8>> = image::ImageBuffer::new(90, 58);
