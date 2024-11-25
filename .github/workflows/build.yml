@@ -1,0 +1,28 @@
+name: Build and deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: BingyanStudio/actions/.github/workflows/build-and-push-image.yaml@main
+    with:
+      name: hustledger-dev
+      tag: ${{ github.sha }}
+      # 如果需要指定构建的目录可以使用 context 参数，默认为 .
+      # context: app
+      # 如果需要指定构建的 Dockerfile 可以使用 dockerfile 参数，默认为 Dockerfile
+      # dockerfile: app/Dockerfile
+
+  deploy:
+    needs: build
+    uses: BingyanStudio/actions/.github/workflows/update-deployment.yaml@main
+    with:
+      name: hustledger-dev
+      namespace: hustledger-dev
+      tag: ${{ github.sha }}
+      filename: hustledger-dev.yaml
+      

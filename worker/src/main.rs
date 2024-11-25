@@ -7,6 +7,7 @@ use std::time::Duration;
 use std::collections;
 use reqwest::{Client, header};
 use async_recursion::async_recursion;
+use std::fs;
 
 pub mod config;
 pub mod utils;
@@ -17,6 +18,8 @@ pub enum WorkerError {
     InvalidPeriod(String),
     #[error("Card system error: {0}")]
     CardSystemError(String),
+    #[error("File error: {0}")]
+    FileError(String),
     #[error("Database error: {0}")]
     DatabaseError(#[from] mongodb::error::Error),
     #[error("Redis error: {0}")]
@@ -34,7 +37,7 @@ const MEAL_TIME_RANGES: [(i64, i64, usize); 4] = [
     (170000, 200000, 2), // dinner
     (220000, 240000, 3), // midnight snack
 ];
-const CAF_NAME: [&str; 14] = ["百惠", "百景", "集锦", "东一", "东二", "东三", "学一", "学二", "喻园", "食堂", "紫荆园", "西一", "西二", "东园"];
+const CAF_NAME: [&str; 14] = ["百惠", "百景", "集锦", "东一", "东二", "东三", "学一", "学二", "喻���", "食堂", "紫荆园", "西一", "西二", "东园"];
 const GRO_NAME: [&str; 2] = ["超市", "商店"];
 
 struct RedisConnections {
@@ -104,12 +107,36 @@ struct ReportData {
     midnight_snack: Meal,
 }
 
+#[derive(Deserialize)]
+struct MerchantTag {
+    mercacc: i32,
+    tag: String,
+}
+
+fn init_tags(redis_conn: &mut redis::Connection) -> Result<(), WorkerError> {
+    let tags_content = fs::read_to_string("tags.json")
+        .map_err(|e| WorkerError::FileError(e.to_string()))?;
+    
+    let merchant_tags: Vec<MerchantTag> = serde_json::from_str(&tags_content)
+        .map_err(|e| WorkerError::FileError(e.to_string()))?;
+
+    for tag in merchant_tags {
+        let _: () = redis_conn.set(tag.mercacc.to_string(), tag.tag)?;
+    }
+
+    Ok(())
+}
 
 #[tokio::main]
 async fn main() {
-    let config = config::config::init_config("config.toml").unwrap();
+    let config = config::config::init_config().await;
     let mongo_client = MongoClient::with_uri_str(&config.db.url).await.unwrap();
     let mut redis_conns = RedisConnections::new(&config).unwrap();
+    
+    // Initialize tags from JSON file
+    if let Err(e) = init_tags(&mut redis_conns.tag) {
+        eprintln!("Failed to initialize tags: {}", e);
+    }
 
     loop {
         process_queue(&mongo_client, &mut redis_conns).await;

@@ -9,45 +9,12 @@ use env_logger::Env;
 use mongodb::{Client as MongoClient, options::ClientOptions};
 use redis::Client as RedisClient;
 
-use std::env;
-
 type TagsClient = Option<RedisClient>;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
 
-    let config = match env::var_os("APP_NAME"){
-        Some(val) => {
-            match reqwest::get(format!("http://cc-server.config-center/{}/config.toml/raw", val.into_string().unwrap())).await{
-                Ok(res) => {
-                    match res.text().await{
-                        Ok(text) => {
-                            match config::config::init_config_from_str(text.as_str()) {
-                                Ok(config) => config,
-                                Err(e) => {
-                                    panic!("Failed to load config: {}", e);
-                                },
-                            }
-                        },
-                        Err(e) => {
-                            panic!("Failed to load config: {}", e);
-                        }
-                    }
-                },
-                Err(e) => {
-                    panic!("Failed to load config from config-center: {}", e);
-                }
-            }
-        },
-        None => {
-            match config::config::init_config("config.toml") {
-                Ok(config) => config,
-                Err(e) => {
-                    panic!("Failed to load config from file: {}", e);
-                },
-            }
-        }
-    };
+    let config = config::config::init_config().await;
 
 
     env_logger::init_from_env(Env::default().default_filter_or("info"));
