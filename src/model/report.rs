@@ -86,6 +86,9 @@ pub async fn get_report(account_no: String, period: &str, castgc: &str, redis_cl
                     Ok(Status::Finished(report))
                 },
                 Err(_) => {
+                    if period != "week" && period != "month" {
+                        return Ok(Status::Error(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "Invalid period"))));
+                    }
                     let _: () = con.set(&key, "waiting:".to_string()+castgc)?;
                     Ok(Status::Created)
                 }

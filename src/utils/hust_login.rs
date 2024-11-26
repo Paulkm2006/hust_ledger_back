@@ -50,7 +50,7 @@ pub async fn get_account_no(castgc: &str) -> Result<String, Box<dyn std::error::
 			Some(cap) => cap.as_str(),
 			None => {return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "String match failed")));},
 		},
-		None => {return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "Regex match failed.")));},
+		None => {return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "Login expired.")));},
 	};
 	Ok(account_no.to_string())
 }

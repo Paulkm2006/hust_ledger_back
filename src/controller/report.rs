@@ -1,15 +1,9 @@
-use serde::{Serialize, Deserialize};
+use serde::Serialize;
 use super::super::model::report::{Status, ReportData, get_report};
 use super::super::utils::hust_login::get_account_no;
-use actix_web::{web, HttpResponse, Responder};
+use actix_web::{web, HttpResponse, Responder, HttpRequest};
 use mongodb::Client as MongoClient;
 use redis::Client as RedisClient;
-
-#[derive(Deserialize)]
-pub struct Query {
-	castgc: String,
-	period: String,
-}
 
 #[derive(Serialize)]
 pub struct Report{
@@ -18,8 +12,19 @@ pub struct Report{
 	data: Option<ReportData>,
 }
 
-pub async fn report(q: web::Query<Query>, redis_client: web::Data<RedisClient>, mongo_client: web::Data<MongoClient>) -> Result<impl Responder, Box<dyn std::error::Error>> {
-	let account_no = match get_account_no(&q.castgc).await{
+pub async fn report(req: HttpRequest, path: web::Path<(String,)>, redis_client: web::Data<RedisClient>, mongo_client: web::Data<MongoClient>) -> Result<impl Responder, Box<dyn std::error::Error>> {
+	let castgc = match req.headers().get("CASTGC") {
+		Some(header_value) => header_value.to_str().unwrap_or("").to_string(),
+		None => return Ok(HttpResponse::BadRequest().json(Report{
+			status: 400,
+			msg: "Missing CASTGC header".to_string(),
+			data: None,
+		})),
+	};
+
+	let period = path.0.clone();
+
+	let account_no = match get_account_no(&castgc).await{
 		Ok(t) => t,
 		Err(e) => {return Ok(HttpResponse::Forbidden().json(Report{
 			status: 403,
@@ -27,7 +32,7 @@ pub async fn report(q: web::Query<Query>, redis_client: web::Data<RedisClient>, 
 			data: None,
 		}));},
 	};
-	match get_report(account_no, &q.period, &q.castgc, redis_client, mongo_client).await?{
+	match get_report(account_no, &period, &castgc, redis_client, mongo_client).await?{
 		Status::Created => Ok(HttpResponse::Created().json(Report{
 			status: 201,
 			msg: "Report generation queued".to_string(),

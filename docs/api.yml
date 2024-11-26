@@ -48,22 +48,22 @@ paths:
               application/json:
                 schema:
                   $ref: '#/components/schemas/LoginResponse'
-  /report:
+  /report/{period}:
     get:
       summary: Report
       parameters:
-        - name: castgc
+        - name: CASTGC
           in: header
           required: true
           schema:
             type: string
           description: castgc for HUSTPASS
         - name: period
-          in: query
+          in: path
           required: true
           schema:
             type: string
-            enum: [week, month, year]
+            enum: [week, month]
           description: Period of the report
       responses:
         '201':
@@ -138,10 +138,10 @@ paths:
                 $ref: '#/components/schemas/ReportResponse'
               example:
                 status: 403
-                msg: castgc is invalid
+                msg: Login expired
                 data: null
         '500':
-          description: Internal Error
+          description: Internal Error or invalid period
         '400':
           description: Bad request
   /tags:

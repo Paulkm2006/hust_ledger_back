@@ -7,7 +7,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
 	web::scope("/login")
 			.route("", web::post().to(utils::hust_login::login)));
 	cfg.service(
-		web::scope("/report").route("", web::get().to(controller::report::report))
+		web::scope("/report/{period}").route("", web::get().to(controller::report::report))
 	);
 	cfg.service(
 		web::scope("/tags")
